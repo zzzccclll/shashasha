@@ -7,7 +7,6 @@ class miaosha
     private $redisDB   = '0';
 
     private $hdsKey         = 'XCHD';             //所有活动缓存
-    const HD_REWORD_KEY     = '%s_REWARD_%s';     //活动奖励池
     const HD_LUCKY_KEY      = '%s_LUCKY_%s';      //中奖名单
     const HD_PRODUCT_KEY    = '%s_PRODUCT_%s';    //商品库存队列
 
@@ -58,12 +57,8 @@ class miaosha
     public function getRedis()
     {
         if(null === self::$redis){
-            //Redis::__construct;
             $redis = new Redis();
-            //var_dump($redis);die;
-            //$conn = $redis->pconnect($this->redisHost, $this->redisPort);
             $conn = $redis->pconnect('127.0.0.1', 6379);
-            //var_dump($conn);die;
             if($conn){
                 $redis->auth($this->redisAuth);
                 $redis->select($this->redisDB);
@@ -83,45 +78,10 @@ class miaosha
     }
 
 
-    public function delActivity($activityId)
-    {
-        $redis = $this->getRedis();
-        $redis->hDel($this->hdsKey, $activityId);
-
-        $stockKey   = sprintf(self::HD_STOCK_KEY, $this->hdsKey, $activityId);
-        $redis->del($stockKey);
-
-        $rewardKey   = sprintf(self::HD_REWORD_KEY, $this->hdsKey, $activityId);
-        $redis->del($rewardKey);
-
-        $luckKey   = sprintf(self::HD_LUCKY_KEY, $this->hdsKey, $activityId);
-        $redis->del($luckKey);
-
-        $queueKey   = sprintf(self::HD_QUEUE_KEY, $this->hdsKey, $activityId);
-        $redis->del($queueKey);
-    }
-
-
-    public function unsetAll()
-    {
-        $redis = $this->getRedis();
-        $activities = $redis->hGetAll($this->hdsKey);
-        if($activities)
-        {
-            foreach ($activities as $key => $act) {
-                $this->delActivity($key);
-            }
-
-            $redis->del($this->hdsKey);
-        }
-    }
-
-
     public function getActivity($activityId)
     {
         $redis = $this->getRedis();
         $data  = $redis->hGet($this->hdsKey, $activityId);
-//var_dump(json_decode($data));die;
         return $data ? json_decode($data, true) : null;
     }
 
@@ -141,54 +101,6 @@ class miaosha
         $stockKey   = sprintf(self::HD_STOCK_KEY, $this->hdsKey, $activityId);
 
         return $redis->get($stockKey);
-    }
-
-
-    public function incrStock($activityId, $val=1)
-    {
-        $redis      = $this->getRedis();
-        $stockKey   = sprintf(self::HD_STOCK_KEY, $this->hdsKey, $activityId);
-
-        $redis->incrBy($stockKey, $val);
-    }
-
-
-    public function decrStock($activityId, $val=1)
-    {
-        $redis      = $this->getRedis();
-        $stockKey   = sprintf(self::HD_STOCK_KEY, $this->hdsKey, $activityId);
-
-        $redis->decrBy($stockKey, $val);
-    }
-
-
-    public function setRewards($activityId, $rewards)
-    {
-        $redis      = $this->getRedis();
-        $rewardsKey = sprintf(self::HD_REWORD_KEY, $this->hdsKey, $activityId);
-        foreach ($rewards as $k => $reward) {
-            $redis->hSet($rewardsKey, "rwd_".$k, json_encode($reward));
-        }
-    }
-
-
-
-    public function getRewards($activityId)
-    {
-        $redis      = $this->getRedis();
-        $rewardsKey = sprintf(self::HD_REWORD_KEY, $this->hdsKey, $activityId);
-        
-        return $redis->hGetAll($rewardsKey);
-    }
-
-
-    public function getReward($activityId, $key)
-    {
-        $redis      = $this->getRedis();
-        $rewardsKey = sprintf(self::HD_REWORD_KEY, $this->hdsKey, $activityId);
-        $data       = $redis->hGet($rewardsKey, "rwd_".$key);
-
-        return $data ? json_decode($data, true) : null;
     }
 
 
@@ -212,92 +124,12 @@ class miaosha
     }
 
 
-//    public function run($activityId, $identification)
-//    {
-//
-//        $redis      = $this->getRedis();
-//        //$redis->del($this->hdsKey);die;
-//        $stockKey   = sprintf(self::HD_STOCK_KEY, $this->hdsKey, $activityId);
-//
-//        $now        = time();
-//        $stock      = $redis->get($stockKey);
-//       // var_dump($stock);die;
-//        $acitivty   = $this->getActivity($activityId);
-//        //var_dump($acitivty);die;
-//        if($acitivty)
-//        {
-//           // $date = date('Y-m-d H:i:s',$acitivty['start_time']);die;
-//            if(!empty($acitivty['start_time']) && $now < $acitivty['start_time'])
-//            {
-//                return -4;//活动未开始
-//            }
-////var_dump($now,$acitivty['end_time']);die;
-//            if(!empty($acitivty['end_time']) && $now > $acitivty['end_time'])
-//            {
-//
-//                return -5;//活动已结束
-//            }
-////var_dump($stock);die;
-//            if($stock > 0)
-//            {
-//                $luckKey= sprintf(self::HD_LUCKY_KEY, $this->hdsKey, $activityId);
-////                if($redis->hExists($luckKey, $identification))
-////                {
-////                    //echo 222;;die;
-////                    return -1;//已领过
-////                }
-//
-//                //redis事务
-//                $redis->watch($stockKey);
-//                $redis->multi();
-//               // var_dump($redis->get($stockKey));die;
-//                $redis->decr($stockKey);
-//                //var_dump($redis->get($stockKey));die;
-//                $result = $redis->exec();
-//               // var_dump($result);die;
-//                if($result)
-//                {
-//                    $stock      = $result[0];
-//                    //var_dump($stock);die;
-//                    $idx        = $stock;//$redis->hLen($luckKey);
-//                   // $rewardData = ['id' => $identification, 'time' => $now];
-//                    $rewardData = ['userid' => $identification, 'productid' => $activityId];
-//                    //$reward     = $this->getReward($activityId, $idx);
-////                    if($reward)
-////                    {
-////                        $rewardData['reward'] = $reward;
-////                        var_dump($rewardData);die;
-//
-//                        //保存中奖信息
-//                        $redis->hSet($luckKey, $identification, $rewardData);
-//
-//                        $this->pushQueue($activityId, $rewardData);
-//                        //var_dump($stock);die;
-//                        return ['stock'=>$stock, 'data'=>$rewardData];
-////                    }
-//
-//                    return -6;//分配奖励失败, 理论上不应该发生
-//                }
-//                else
-//                {
-//                    return -2;//领取失败
-//                }
-//            }
-//            else
-//            {
-//                return -3;//已领完
-//            }
-//        }
-//
-//        //活动不存在
-//        return 0;
-//    }
-
-
     public function seckilling($productid ,$userid)
     {
 
         $redis      = $this->getRedis();
+        //$aaa = $redis->get('aaa');
+        //var_dump($aaa);die;
         $stockKey   = sprintf(self::HD_STOCK_KEY, $this->hdsKey, $productid);
         $now        = time();
         $stock      = $redis->get($stockKey);
@@ -317,35 +149,21 @@ class miaosha
             if($stock > 0)
             {
                 $userKey= sprintf(self::HD_LUCKY_KEY, $this->hdsKey, $productid);
-                $productKey= sprintf(self::HD_PRODUCT_KEY, $this->hdsKey, $productid);
-                if($redis->hExists($userKey, $userid))
+                $id = $userid . $productid;
+                $redis->incr($id);
+                if($redis->get($id) > 1)
                 {
-                    return -1;//已领过
+                    return -1;//已秒过
                 }
-
-                //redis事务
-                $redis->watch($stockKey);
-                $redis->multi();
-                // var_dump($redis->get($stockKey));die;
                 $redis->decr($stockKey);
-                //var_dump($redis->get($stockKey));die;
-                $result = $redis->exec();
-                // var_dump($result);die;
+                $result = $redis->get($stockKey);
                 if($result)
                 {
                     $aa = $acitivty['stock'];
-
-                    //$rewardData = ['userid' => $userid, 'productid' => $productid];
                     $rewardData =  $aa - $stock +1;
                     $redis->hSet($userKey, $userid, $rewardData);
-                    $data = array(
-                        'userid' => $userid,
-                        'goodsid' => $rewardData,
-                    );
-
-                   // $redis->hSet($productKey, $userid, json_encode($data));
+                    $productKey= sprintf(self::HD_PRODUCT_KEY, $this->hdsKey, $productid);
                     $redis->hSet($productKey, $userid,$rewardData );
-
                     $this->pushQueue($productid, $rewardData);
                     return 0;
                 }
