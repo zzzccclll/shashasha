@@ -9,6 +9,8 @@ class miaosha
     private $hdsKey         = 'XCHD';             //所有活动缓存
     const HD_REWORD_KEY     = '%s_REWARD_%s';     //活动奖励池
     const HD_LUCKY_KEY      = '%s_LUCKY_%s';      //中奖名单
+    const HD_PRODUCT_KEY    = '%s_PRODUCT_%s';    //商品库存队列
+
     const HD_QUEUE_KEY      = '%s_QUEUE_%s';      //活动任务队列
     const HD_STOCK_KEY      = '%s_STOCK_%s';      //活动库存
 
@@ -415,6 +417,7 @@ class miaosha
             if($stock > 0)
             {
                 $userKey= sprintf(self::HD_LUCKY_KEY, $this->hdsKey, $productid);
+                $productKey= sprintf(self::HD_PRODUCT_KEY, $this->hdsKey, $productid);
                 if($redis->hExists($userKey, $userid))
                 {
                     return -1;//已领过
@@ -435,6 +438,13 @@ class miaosha
                     //$rewardData = ['userid' => $userid, 'productid' => $productid];
                     $rewardData =  $aa - $stock +1;
                     $redis->hSet($userKey, $userid, $rewardData);
+                    $data = array(
+                        'userid' => $userid,
+                        'goodsid' => $rewardData,
+                    );
+
+                   // $redis->hSet($productKey, $userid, json_encode($data));
+                    $redis->hSet($productKey, $userid,$rewardData );
 
                     $this->pushQueue($productid, $rewardData);
                     return 0;
@@ -470,6 +480,7 @@ class miaosha
         $startTime = $acitivty['start_time'];
        // $endTime = $acitivty['end_time'];
         $data = array(
+            'errno' => 0,
             'status' => 0,
             'goodsid'=> '',
         );
@@ -486,6 +497,26 @@ class miaosha
             $data['goodsid'] = $user;
             return json_encode($data);
         }
+    }
+
+    public function  queryProductSeckillingInfo($productid)
+    {
+        $redis  = $this->getRedis();
+        $userKey= sprintf(self::HD_LUCKY_KEY, $this->hdsKey, $productid);
+        $user = $redis->hGetAll($userKey);
+        //var_dump($user);die;
+        $arr = array();
+        foreach($user as $key => $value)
+        {
+            $temp['userid'] = $key;
+            $temp['goodsid'] = $value;
+            $arr[] = $temp;
+        }
+        $result = array();
+        $result['errno'] =0;
+        $result['list'] = $arr;
+
+        return json_encode($result);
 
     }
 
