@@ -13,24 +13,8 @@ $ms->newActivity($acId, [
     //'end_time'      => '1456311600',
     'end_time'      => '1561784784',
     'total'         => 1000,
-    'stock'         => 10
+    'stock'         => 100
 ]);
-$ms->setStock($acId, 10);
-$ms->setRewards($acId,[
-    ['code'=>'123456', 'money'=>'100', 'valid_days'=>30],
-    ['code'=>'123457', 'money'=>'100', 'valid_days'=>30],
-    ['code'=>'123458', 'money'=>'100', 'valid_days'=>30],
-    ['code'=>'123459', 'money'=>'100', 'valid_days'=>30],
-    ['code'=>'123450', 'money'=>'100', 'valid_days'=>30],
-    ['code'=>'123451', 'money'=>'100', 'valid_days'=>30],
-    ['code'=>'123452', 'money'=>'100', 'valid_days'=>30],
-    ['code'=>'123453', 'money'=>'100', 'valid_days'=>30],
-    ['code'=>'123454', 'money'=>'100', 'valid_days'=>30],
-    ['code'=>'123455', 'money'=>'100', 'valid_days'=>30]
-]);
-
-var_dump($ms->getActivity($acId));
-var_dump($ms->getRewards($acId));
-var_dump($ms->getReward($acId, 9));
+$ms->setStock($acId, 100);
 
 //header("content-type:text/html;charset=utf-8");

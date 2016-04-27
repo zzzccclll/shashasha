@@ -17,12 +17,6 @@ class miaosha
     private static $redis = null;
     public static $inst = null;
 
-    /**
-     * 构造函数，可传入redis配置和活动配置[可选]
-     * @Author   WirrorYin
-     * @DateTime 2016-02-25T13:30:46+0800
-     * @param    [type]                   $config [description]
-     */
     public function __construct($config=[])
     {
         if(!empty($config['redis']))
@@ -51,12 +45,7 @@ class miaosha
         }
     }
 
-    /**
-     * 获取单例
-     * @Author   WirrorYin
-     * @DateTime 2016-02-25T13:31:13+0800
-     * @return   [type]                   [description]
-     */
+
     public static function instance() 
     {
         $clz = __CLASS__;
@@ -66,12 +55,6 @@ class miaosha
         return self::$inst;
     }
 
-    /**
-     * 获取redis实例
-     * @Author   WirrorYin
-     * @DateTime 2016-02-25T13:31:32+0800
-     * @return   [type]                   [description]
-     */
     public function getRedis()
     {
         if(null === self::$redis){
@@ -93,27 +76,13 @@ class miaosha
         return self::$redis;
     }
 
-    /**
-     * 新活动
-     * @Author   WirrorYin
-     * @DateTime 2016-02-25T13:31:44+0800
-     * @param    [type]                   $activityId [description]
-     * @param    [type]                   $data       [description]
-     * @return   [type]                               [description]
-     */
     public function newActivity($activityId, $data)
     {
         $redis = $this->getRedis();
         $redis->hSet($this->hdsKey, $activityId, json_encode($data));
     }
 
-    /**
-     * 删除活动
-     * @Author   WirrorYin
-     * @DateTime 2016-02-25T15:37:01+0800
-     * @param    [type]                   $activityId [description]
-     * @return   [type]                               [description]
-     */
+
     public function delActivity($activityId)
     {
         $redis = $this->getRedis();
@@ -132,12 +101,7 @@ class miaosha
         $redis->del($queueKey);
     }
 
-    /**
-     * 删除所有活动
-     * @Author   WirrorYin
-     * @DateTime 2016-02-25T15:41:45+0800
-     * @return   [type]                   [description]
-     */
+
     public function unsetAll()
     {
         $redis = $this->getRedis();
@@ -152,13 +116,7 @@ class miaosha
         }
     }
 
-    /**
-     * 获取活动信息
-     * @Author   WirrorYin
-     * @DateTime 2016-02-25T13:47:01+0800
-     * @param    [type]                   $activityId [description]
-     * @return   [type]                               [description]
-     */
+
     public function getActivity($activityId)
     {
         $redis = $this->getRedis();
@@ -167,11 +125,7 @@ class miaosha
         return $data ? json_decode($data, true) : null;
     }
 
-    /**
-     * 设置活动库存
-     * @Author   WirrorYin
-     * @DateTime 2016-02-25T13:37:26+0800
-     */
+
     public function setStock($activityId, $stock)
     {
         $redis      = $this->getRedis();
@@ -180,13 +134,7 @@ class miaosha
         $redis->set($stockKey, $stock);
     }
 
-    /**
-     * 获取活动库存
-     * @Author   WirrorYin
-     * @DateTime 2016-02-25T13:44:07+0800
-     * @param    [type]                   $activityId [description]
-     * @return   [type]                               [description]
-     */
+
     public function getStock($activityId)
     {
         $redis      = $this->getRedis();
@@ -195,13 +143,7 @@ class miaosha
         return $redis->get($stockKey);
     }
 
-    /**
-     * 活动库存递增
-     * @Author   WirrorYin
-     * @DateTime 2016-02-25T13:39:29+0800
-     * @param    [type]                   $activityId [description]
-     * @return   [type]                               [description]
-     */
+
     public function incrStock($activityId, $val=1)
     {
         $redis      = $this->getRedis();
@@ -210,13 +152,7 @@ class miaosha
         $redis->incrBy($stockKey, $val);
     }
 
-    /**
-     * 活动库存递减
-     * @Author   WirrorYin
-     * @DateTime 2016-02-25T13:39:29+0800
-     * @param    [type]                   $activityId [description]
-     * @return   [type]                               [description]
-     */
+
     public function decrStock($activityId, $val=1)
     {
         $redis      = $this->getRedis();
@@ -225,13 +161,7 @@ class miaosha
         $redis->decrBy($stockKey, $val);
     }
 
-    /**
-     * 设置活动奖励
-     * @Author   WirrorYin
-     * @DateTime 2016-02-25T13:31:54+0800
-     * @param    [type]                   $activityId [description]
-     * @param    [type]                   $rewards    [description]
-     */
+
     public function setRewards($activityId, $rewards)
     {
         $redis      = $this->getRedis();
@@ -241,13 +171,8 @@ class miaosha
         }
     }
 
-    /**
-     * 获取活动奖励列表
-     * @Author   WirrorYin
-     * @DateTime 2016-02-25T15:09:11+0800
-     * @param    [type]                   $activityId [description]
-     * @return   [type]                               [description]
-     */
+
+
     public function getRewards($activityId)
     {
         $redis      = $this->getRedis();
@@ -256,14 +181,7 @@ class miaosha
         return $redis->hGetAll($rewardsKey);
     }
 
-    /**
-     * 获取活动奖励
-     * @Author   WirrorYin
-     * @DateTime 2016-02-25T13:49:35+0800
-     * @param    [type]                   $activityId [description]
-     * @param    [type]                   $rwdKey     [description]
-     * @return   [type]                               [description]
-     */
+
     public function getReward($activityId, $key)
     {
         $redis      = $this->getRedis();
@@ -273,13 +191,7 @@ class miaosha
         return $data ? json_decode($data, true) : null;
     }
 
-    /**
-     * 数据入队列
-     * @Author   WirrorYin
-     * @DateTime 2016-02-25T14:23:47+0800
-     * @param    [type]                   $activityId [description]
-     * @return   [type]                               [description]
-     */
+
     public function pushQueue($activityId, $data)
     {
         $redis      = $this->getRedis();
@@ -288,13 +200,7 @@ class miaosha
         $redis->lPush($queueKey, json_encode($data));
     }
 
-    /**
-     * 数据出队列
-     * @Author   WirrorYin
-     * @DateTime 2016-02-25T14:24:08+0800
-     * @param    [type]                   $activityId [description]
-     * @return   [type]                               [description]
-     */
+
     public function popQueue($activityId)
     {
         $redis      = $this->getRedis();
@@ -305,13 +211,7 @@ class miaosha
         return $data ? json_decode($data, true) : null;
     }
 
-    /**
-     * 执行秒杀
-     * @Author   WirrorYin
-     * @DateTime 2016-02-25T13:51:40+0800
-     * @param    [type]                   $activityId [description]
-     * @return   [type]                               [description]
-     */
+
 //    public function run($activityId, $identification)
 //    {
 //
