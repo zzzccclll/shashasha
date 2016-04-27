@@ -392,7 +392,7 @@ class miaosha
 //    }
 
 
-    public function run($productid ,$userid)
+    public function seckilling($productid ,$userid)
     {
 
         $redis      = $this->getRedis();
@@ -430,7 +430,10 @@ class miaosha
                 // var_dump($result);die;
                 if($result)
                 {
-                    $rewardData = ['userid' => $userid, 'productid' => $productid];
+                    $aa = $acitivty['stock'];
+
+                    //$rewardData = ['userid' => $userid, 'productid' => $productid];
+                    $rewardData =  $aa - $stock +1;
                     $redis->hSet($userKey, $userid, $rewardData);
 
                     $this->pushQueue($productid, $rewardData);
@@ -460,11 +463,29 @@ class miaosha
     {
         $redis      = $this->getRedis();
         $userKey= sprintf(self::HD_LUCKY_KEY, $this->hdsKey, $productid);
-        $data = $redis->hGet($userKey,$userid);
+        $user = $redis->hGet($userKey,$userid);
+
         $acitivty   = $this->getActivity($productid);
-
-
-
+        $now = time();
+        $startTime = $acitivty['start_time'];
+       // $endTime = $acitivty['end_time'];
+        $data = array(
+            'status' => 0,
+            'goodsid'=> '',
+        );
+        if($now < $startTime)
+        {
+            return json_encode($data);
+        }
+        if(empty($user))
+        {
+            $data['status'] = 2;
+            return json_encode($data);
+        }else{
+            $data['status'] = 1;
+            $data['goodsid'] = $user;
+            return json_encode($data);
+        }
 
     }
 
